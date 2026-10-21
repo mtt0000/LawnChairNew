@@ -59,6 +59,11 @@ class LawnchairAlphabeticalAppsList<T>(
         } catch (t: Throwable) {
             Log.w(TAG, "Failed to initialize hidden apps", t)
         }
+        if (privateProfileManager != null) {
+            prefs2.privateSpaceDisguise.onEach(launchIn = context.launcher.lifecycleScope) {
+                onAppsUpdated()
+            }
+        }
         observeFolders()
     }
 

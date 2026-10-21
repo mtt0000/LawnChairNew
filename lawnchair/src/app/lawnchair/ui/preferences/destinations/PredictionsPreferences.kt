@@ -124,6 +124,14 @@ private fun AppPredictionsFeature(
 
             NoPredictor -> Unit
         }
+        // Private space is only available on Android 15 and above
+        if (Utilities.ATLEAST_V && predictionModeAdapter.state.value != NoPredictor) {
+            SwitchPreference(
+                adapter = prefs2.excludePrivateSpaceFromSuggestions.getAdapter(),
+                label = stringResource(R.string.prediction_exclude_private_space_label),
+                description = stringResource(R.string.prediction_exclude_private_space_description),
+            )
+        }
     }
 }
 

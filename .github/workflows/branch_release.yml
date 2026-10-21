@@ -1,0 +1,97 @@
+name: Branch release
+
+# On every push (or manual run), build the APK and replace the branch's release with one for the
+# latest commit. Each branch has a single release tagged `build-<branch>`; releases of deleted
+# branches are removed.
+
+on:
+  push:
+    branches:
+      - '**'
+  delete:
+  workflow_dispatch:
+
+concurrency:
+  group: branch-release-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    if: github.event_name != 'delete'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - uses: actions/setup-java@v6
+        with:
+          distribution: 'zulu'
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+      # Without a signing key in the secrets, keep the same debug key across runs so that new
+      # builds install as updates instead of requiring an uninstall.
+      - name: Restore debug keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: debug-keystore
+      - name: Write sign info
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+        run: |
+          if [ -n "$KEYSTORE" ]; then
+            echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> keystore.properties
+            echo keyAlias='${{ secrets.KEY_ALIAS }}' >> keystore.properties
+            echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> keystore.properties
+            echo storeFile='${{ github.workspace }}/key.jks' >> keystore.properties
+            echo "$KEYSTORE" | base64 --decode > "${{ github.workspace }}/key.jks"
+          else
+            echo "::warning::No KEYSTORE secret set, signing with the cached debug key."
+          fi
+      - name: Build APK
+        run: ./gradlew assembleLawnWithQuickstepNightlyRelease
+      - name: Prepare release info
+        run: |
+          BRANCH_SLUG=$(echo "${{ github.ref_name }}" | sed 's/[^A-Za-z0-9._-]/-/g')
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          # Note the # and () symbols are not supported in GitHub Release filenames
+          APK_NAME="Lawnchair.${BRANCH_SLUG}.${SHORT_SHA}.apk"
+          mv build/outputs/apk/lawnWithQuickstepNightly/release/*.apk "./$APK_NAME"
+          echo "TAG=build-${BRANCH_SLUG}" >> "$GITHUB_ENV"
+          echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
+          echo "APK_NAME=${APK_NAME}" >> "$GITHUB_ENV"
+      - name: Replace branch release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release delete "$TAG" -y --cleanup-tag
+          fi
+          git log -1 --format='Branch: `${{ github.ref_name }}`%nCommit: %H%n%n%B' > notes.md
+          gh release create "$TAG" "./$APK_NAME" \
+            --target "${{ github.sha }}" \
+            --title "${{ github.ref_name }} (${SHORT_SHA})" \
+            --notes-file notes.md \
+            --prerelease
+
+  cleanup-deleted-branches:
+    needs: build-and-release
+    if: always() && needs.build-and-release.result != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete releases of branches that no longer exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api --paginate "repos/$REPO/branches" --jq '.[].name' \
+            | sed 's/[^A-Za-z0-9._-]/-/g; s/^/build-/' | sort -u > branch_tags.txt
+          gh release list --repo "$REPO" --limit 1000 --json tagName --jq '.[].tagName' \
+            | { grep '^build-' || true; } | sort -u > release_tags.txt
+          comm -23 release_tags.txt branch_tags.txt | while read -r tag; do
+            echo "Deleting release $tag"
+            gh release delete "$tag" --repo "$REPO" -y --cleanup-tag
+          done

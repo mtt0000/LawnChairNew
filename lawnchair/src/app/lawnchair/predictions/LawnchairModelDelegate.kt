@@ -169,6 +169,11 @@ class LawnchairModelDelegate @Inject constructor(
             .drop(1) // Skip
             .onEach { MODEL_EXECUTOR.execute { recreatePredictors() } }
             .launchIn(observerScope)
+        prefs2.excludePrivateSpaceFromSuggestions.get()
+            .distinctUntilChanged()
+            .drop(1) // Skip
+            .onEach { MODEL_EXECUTOR.execute { recreatePredictors() } }
+            .launchIn(observerScope)
     }
 
     private fun unregisterPredictionModeChanged() {

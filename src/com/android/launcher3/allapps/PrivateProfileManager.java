@@ -86,6 +86,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import app.lawnchair.allapps.PrivateSpaceDisguise;
+import app.lawnchair.allapps.PrivateSpaceDisguiseInfo;
+
 /**
  * Companion class for {@link ActivityAllAppsContainerView} to manage private space section related
  * logic in the Personal tab.
@@ -148,6 +151,8 @@ public class PrivateProfileManager extends UserProfileManager {
     private final String mLockedStateContentDesc;
     private final String mUnLockedStateContentDesc;
     private final String mPSAppTitleOverride;
+    @Nullable
+    private PrivateSpaceDisguiseInfo mDisguiseInfo;
 
     public PrivateProfileManager(UserManager userManager,
             ActivityAllAppsContainerView<?> allApps,
@@ -213,7 +218,39 @@ public class PrivateProfileManager extends UserProfileManager {
 
     /** Whether private profile should be hidden on Launcher. */
     public boolean isPrivateSpaceHidden() {
-        return getCurrentState() == STATE_DISABLED && isPrivateSpaceHiddenWhenLocked();
+        return getCurrentState() == STATE_DISABLED
+                && (isPrivateSpaceHiddenWhenLocked() || isPrivateSpaceDisguised());
+    }
+
+    /**
+     * LC: Whether the locked private space is shown as a fake app icon instead of the header.
+     */
+    public boolean isPrivateSpaceDisguised() {
+        return PrivateSpaceDisguise.current(mAllApps.getContext()) != PrivateSpaceDisguise.NONE;
+    }
+
+    /**
+     * LC: Returns the fake app to show in the personal app list while the private space is locked,
+     * or {@code null} if the private space isn't disguised or is unlocked.
+     */
+    @Nullable
+    public AppInfo getDisguiseAppInfo() {
+        if (getCurrentState() != STATE_DISABLED) {
+            return null;
+        }
+        PrivateSpaceDisguise disguise = PrivateSpaceDisguise.current(mAllApps.getContext());
+        if (disguise == PrivateSpaceDisguise.NONE) {
+            return null;
+        }
+        if (mDisguiseInfo == null || mDisguiseInfo.getDisguise() != disguise) {
+            mDisguiseInfo = disguise.createAppInfo(mAllApps.getContext());
+        }
+        return mDisguiseInfo;
+    }
+
+    /** LC: Unlocks the private space when its disguise icon is tapped. */
+    public void onDisguiseClicked() {
+        lockingAction(/* lock */ false);
     }
 
     public boolean isPrivateSpaceHiddenWhenLocked() {

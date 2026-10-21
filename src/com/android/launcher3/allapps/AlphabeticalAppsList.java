@@ -49,6 +49,7 @@ import com.android.launcher3.views.ActivityContext;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -278,6 +279,14 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
 
         appSteam.forEachOrdered(mApps::add);
         privateAppStream.forEachOrdered(mPrivateApps::add);
+        // LC: Show the locked private space as a fake app among the personal apps.
+        if (mPrivateProviderManager != null && !mPrivateApps.isEmpty()) {
+            AppInfo disguise = mPrivateProviderManager.getDisguiseAppInfo();
+            if (disguise != null) {
+                int index = Collections.binarySearch(mApps, disguise, mAppNameComparator);
+                mApps.add(index < 0 ? -(index + 1) : index, disguise);
+            }
+        }
         // Recompose the set of adapter items from the current set of apps
         if (mSearchResults.isEmpty()) {
             updateAdapterItems();

@@ -16,6 +16,7 @@
 
 package app.lawnchair.ui.preferences.destinations
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,11 +31,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.lawnchair.allapps.PrivateSpaceDisguise
 import app.lawnchair.preferences.PreferenceAdapter
 import app.lawnchair.preferences.getAdapter
 import app.lawnchair.preferences.preferenceManager
@@ -43,6 +47,8 @@ import app.lawnchair.ui.preferences.LocalIsExpandedScreen
 import app.lawnchair.ui.preferences.components.AppDrawerHapticFeedbackPreference
 import app.lawnchair.ui.preferences.components.NavigationActionPreference
 import app.lawnchair.ui.preferences.components.colorpreference.ColorPreference
+import app.lawnchair.ui.preferences.components.controls.ListPreference
+import app.lawnchair.ui.preferences.components.controls.ListPreferenceEntry
 import app.lawnchair.ui.preferences.components.controls.SliderPreference
 import app.lawnchair.ui.preferences.components.controls.SwitchPreference
 import app.lawnchair.ui.preferences.components.controls.SwitchPreferenceWithPreview
@@ -54,6 +60,8 @@ import app.lawnchair.ui.preferences.navigation.AppDrawerHiddenApps
 import app.lawnchair.ui.preferences.navigation.Predictions
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.R
+import com.android.launcher3.Utilities
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 
 object AppDrawerRoutes {
     const val HIDDEN_APPS = "hiddenApps"
@@ -94,6 +102,10 @@ fun AppDrawerPreferences(
                 destination = Predictions,
             )
             AppDrawerHapticFeedbackPreference()
+        }
+        // Private space is only available on Android 15 and above
+        if (Utilities.ATLEAST_V) {
+            PrivateSpacePreferences()
         }
         PreferenceGroup(heading = stringResource(R.string.style)) {
             ColorPreference(preference = prefs2.appDrawerBackgroundColor)
@@ -212,6 +224,49 @@ fun AppDrawerPreferences(
             )
         }
     }
+}
+
+@Composable
+private fun PrivateSpacePreferences() {
+    val prefs2 = preferenceManager2()
+    val entries = remember {
+        PrivateSpaceDisguise.entries.map { disguise ->
+            ListPreferenceEntry(
+                value = disguise,
+                endWidget = if (disguise != PrivateSpaceDisguise.NONE) {
+                    { PrivateSpaceDisguiseIcon(disguise) }
+                } else {
+                    null
+                },
+                label = { stringResource(disguise.labelRes) },
+            )
+        }
+    }
+    PreferenceGroup(
+        heading = stringResource(id = R.string.private_space_label),
+        description = stringResource(id = R.string.private_space_locked_style_description),
+    ) {
+        ListPreference(
+            adapter = prefs2.privateSpaceDisguise.getAdapter(),
+            entries = entries,
+            label = stringResource(id = R.string.private_space_locked_style_label),
+        )
+    }
+}
+
+@Composable
+private fun PrivateSpaceDisguiseIcon(disguise: PrivateSpaceDisguise) {
+    val context = LocalContext.current
+    val drawable = remember(context, disguise) {
+        context.getDrawable(disguise.iconRes)
+    }
+    Image(
+        painter = rememberDrawablePainter(drawable),
+        contentDescription = null,
+        modifier = Modifier
+            .size(32.dp)
+            .clip(CircleShape),
+    )
 }
 
 @Composable
