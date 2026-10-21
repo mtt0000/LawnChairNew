@@ -69,6 +69,11 @@ jobs:
           echo "TAG=build-${BRANCH_SLUG}" >> "$GITHUB_ENV"
           echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
           echo "APK_NAME=${APK_NAME}" >> "$GITHUB_ENV"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.APK_NAME }}
+          path: ${{ env.APK_NAME }}
       - name: Replace branch release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

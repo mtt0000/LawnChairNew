@@ -34,9 +34,10 @@ enum class PrivateSpaceDisguise(
     fun createAppInfo(context: Context): PrivateSpaceDisguiseInfo {
         check(this != NONE) { "NONE has no disguise icon" }
         val info = PrivateSpaceDisguiseInfo(this)
-        info.title = context.getString(labelRes)
-        info.contentDescription = info.title
-        info.sectionName = AlphabeticIndexCompat(context).computeSectionName(info.title)
+        val title = context.getString(labelRes)
+        info.title = title
+        info.contentDescription = title
+        info.sectionName = AlphabeticIndexCompat(context).computeSectionName(title)
         info.componentName = ComponentName(context.packageName, "$DISGUISE_CLASS_PREFIX$name")
         info.intent = Intent(Intent.ACTION_MAIN).setComponent(info.componentName)
         info.user = Process.myUserHandle()
