@@ -195,6 +195,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import app.lawnchair.allapps.PrivateSpaceDisguiseInfo;
+
 /**
  * The {@link ActivityContext} with which we inflate Taskbar-related Views. This allows UI elements
  * that are used by both Launcher and Taskbar (such as Folder) to reference a generic
@@ -1632,6 +1634,12 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
                 }
                 mControllers.uiController.onTaskbarIconLaunched(info);
                 mControllers.taskbarStashController.updateAndAnimateTransientTaskbar(true);
+            }
+        } else if (tag instanceof PrivateSpaceDisguiseInfo) {
+            // LC: The disguised private space unlocks instead of launching an app.
+            ActivityAllAppsContainerView<?> appsView = getAppsView();
+            if (appsView != null) {
+                appsView.getPrivateProfileManager().onDisguiseClicked();
             }
         } else if (tag instanceof AppInfo) {
             // Tapping an item in AllApps

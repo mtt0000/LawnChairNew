@@ -49,6 +49,8 @@ import com.android.launcher3.widget.PendingItemDragHelper;
 import com.android.launcher3.widget.WidgetCell;
 import com.android.launcher3.widget.WidgetImageView;
 
+import app.lawnchair.allapps.PrivateSpaceDisguiseInfo;
+
 /**
  * Class to handle long-clicks on workspace items and start drag as a result.
  */
@@ -152,7 +154,8 @@ public class ItemLongClickListener {
 
         StatsLogger logger = launcher.getStatsLogManager().logger();
         if (v.getTag() instanceof ItemInfo itemInfo) {
-            if (itemInfo instanceof PrivateSpaceInstallAppButtonInfo) {
+            if (itemInfo instanceof PrivateSpaceInstallAppButtonInfo
+                    || itemInfo instanceof PrivateSpaceDisguiseInfo) {
                 return false;
             }
             logger.withItemInfo((ItemInfo) v.getTag());

@@ -38,12 +38,16 @@ import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.PredictedContainerInfo;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
+import com.android.launcher3.pm.UserCache;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
+import app.lawnchair.preferences2.PreferenceManager2;
 
 /**
  * Task to update model as a result of predicted apps update
@@ -77,8 +81,16 @@ public class PredictionUpdateTask implements ModelUpdateTask {
                         .map(info -> info.user)
                         .collect(Collectors.toSet());
 
+        // LC: Optionally keep private space apps out of the suggestions.
+        boolean excludePrivateSpace = PreferenceCacheExtensionsKt.firstCached(
+                PreferenceManager2.getInstance(context).getExcludePrivateSpaceFromSuggestions());
+        UserCache userCache = UserCache.INSTANCE.get(context);
+
         List<ItemInfo> items = new ArrayList<>(mTargets.size());
         for (AppTarget target : mTargets) {
+            if (excludePrivateSpace && userCache.getUserInfo(target.getUser()).isPrivate()) {
+                continue;
+            }
             WorkspaceItemInfo itemInfo;
             ShortcutInfo si = target.getShortcutInfo();
             if (si != null) {

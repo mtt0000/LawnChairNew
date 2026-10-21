@@ -28,6 +28,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import app.lawnchair.allapps.PrivateSpaceDisguise
 import app.lawnchair.data.Converters
 import app.lawnchair.font.FontCache
 import app.lawnchair.gestures.config.GestureHandlerConfig
@@ -417,6 +418,18 @@ class PreferenceManager2 @Inject constructor(
     val lawnchairPredictorUseWeightedUsageStats = preference(
         key = booleanPreferencesKey(name = "lawnchair_prediction_use_weighted_usage"),
         defaultValue = false,
+    )
+
+    val excludePrivateSpaceFromSuggestions = preference(
+        key = booleanPreferencesKey(name = "exclude_private_space_from_suggestions"),
+        defaultValue = false,
+    )
+
+    val privateSpaceDisguise = preference(
+        key = stringPreferencesKey(name = "private_space_disguise"),
+        defaultValue = PrivateSpaceDisguise.NONE,
+        parse = { PrivateSpaceDisguise.fromString(it) },
+        save = { it.name },
     )
 
     val launcherPopupOrder = preference(

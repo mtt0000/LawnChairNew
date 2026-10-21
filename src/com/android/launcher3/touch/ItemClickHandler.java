@@ -81,6 +81,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+import app.lawnchair.allapps.PrivateSpaceDisguiseInfo;
+
 /**
  * Class for handling clicks on workspace and all-apps items
  */
@@ -109,6 +111,9 @@ public class ItemClickHandler {
             onClickFolderIcon(v);
         } else if (tag instanceof AppPairInfo) {
             onClickAppPairIcon(v);
+        } else if (tag instanceof PrivateSpaceDisguiseInfo) {
+            // LC: The disguised private space unlocks instead of launching an app.
+            launcher.getAppsView().getPrivateProfileManager().onDisguiseClicked();
         } else if (tag instanceof AppInfo) {
             startAppShortcutOrInfoActivity(v, (AppInfo) tag, launcher);
         } else if (tag instanceof LauncherAppWidgetInfo) {

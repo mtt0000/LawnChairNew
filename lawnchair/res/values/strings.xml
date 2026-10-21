@@ -295,6 +295,21 @@
 
     <string name="prediction_system_settings">Manage system suggestions</string>
 
+    <string name="prediction_exclude_private_space_label">Exclude private space apps</string>
+    <string name="prediction_exclude_private_space_description">Apps in the private space won\'t be shown in suggestions</string>
+
+    <!--
+    Private space
+    -->
+    <string name="private_space_locked_style_label">When locked, show as</string>
+    <string name="private_space_locked_style_description">Disguise the locked private space as an app icon. Tap it to unlock.</string>
+    <string name="private_space_locked_style_bar">Bar at the bottom of the app list</string>
+    <string name="private_space_disguise_calculator">Calculator</string>
+    <string name="private_space_disguise_files">Files</string>
+    <string name="private_space_disguise_notes">Notes</string>
+    <string name="private_space_disguise_weather">Weather</string>
+    <string name="private_space_disguise_clock">Clock</string>
+
     <string name="missing_usage_access_label">Usage access needed</string>
     <string name="missing_usage_access_desc">To improve app suggestions, turn on usage access for <xliff:g id="name" example="Lawnchair">%1$s</xliff:g></string>
 
