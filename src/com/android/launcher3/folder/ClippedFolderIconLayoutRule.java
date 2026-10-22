@@ -4,11 +4,20 @@ import com.android.launcher3.Flags;
 
 public class ClippedFolderIconLayoutRule {
 
-    public static final int MAX_NUM_ITEMS_IN_PREVIEW = 4;
+    /**
+     * LC: Number of icons shown in the closed folder preview, 4 (2x2) or 9 (3x3). Set from the
+     * preferences through {@link #setMaxNumItemsInPreview(int)}.
+     */
+    public static volatile int MAX_NUM_ITEMS_IN_PREVIEW = 4;
     private static final int MIN_NUM_ITEMS_IN_PREVIEW = 2;
+    // Up to this many items, the preview lays them out in a circle.
+    private static final int MAX_NUM_ITEMS_IN_CIRCLE = 4;
 
     public static final float MIN_SCALE = 0.44f;
     public static final float MAX_SCALE = 0.51f;
+    // LC: Scale and spacing of the items in the 3x3 preview.
+    private static final float GRID_3X3_SCALE = 0.27f;
+    private static final float GRID_3X3_SPACING = 0.28f;
 
     // TODO: figure out exact radius for different icons
     private static final float MAX_RADIUS_DILATION = 0.25f;
@@ -28,6 +37,16 @@ public class ClippedFolderIconLayoutRule {
     private boolean mIsRtl;
     private float mBaselineIconScale;
     private int mNumFolderColumns;
+
+    /** LC: Sets how many icons the closed folder preview shows, 4 (2x2) or 9 (3x3). */
+    public static void setMaxNumItemsInPreview(int maxNumItems) {
+        MAX_NUM_ITEMS_IN_PREVIEW = maxNumItems > MAX_NUM_ITEMS_IN_CIRCLE ? 9 : 4;
+    }
+
+    /** LC: Number of rows and columns of the closed folder preview. */
+    public static int getPreviewGridSize() {
+        return MAX_NUM_ITEMS_IN_PREVIEW > MAX_NUM_ITEMS_IN_CIRCLE ? 3 : 2;
+    }
 
     /**
      * initialize the layout rule
@@ -61,11 +80,11 @@ public class ClippedFolderIconLayoutRule {
         if (index == EXIT_INDEX) {
             // 0 1 * <-- Exit position (row 0, col 2)
             // 2 3
-            getGridPosition(0, 2, mTmpPoint);
+            getGridPosition(0, getPreviewGridSize(), mTmpPoint);
         } else if (index == ENTER_INDEX) {
             // 0 1
             // 2 3 * <-- Enter position (row 1, col 2)
-            getGridPosition(1, 2, mTmpPoint);
+            getGridPosition(1, getPreviewGridSize(), mTmpPoint);
         } else if (index >= MAX_NUM_ITEMS_IN_PREVIEW) {
             // Items beyond those displayed in the preview are animated to the center
             mTmpPoint[0] = mTmpPoint[1] = mAvailableSpace / 2 - (mIconSize * totalScale) / 2;
@@ -124,6 +143,10 @@ public class ClippedFolderIconLayoutRule {
      * 2 3  // 3 is row 1, col 1`
      */
     private void getGridPosition(int row, int col, float[] result) {
+        if (getPreviewGridSize() == 3) {
+            getGridPosition3x3(row, col, result);
+            return;
+        }
         // We use position 0 and 3 to calculate the x and y distances between items.
         getPosition(0, 4, result);
         float left = result[0];
@@ -137,7 +160,24 @@ public class ClippedFolderIconLayoutRule {
         result[1] = top + (row * dy);
     }
 
+    /** LC: Position of the item at the given row and column of the 3x3 preview grid. */
+    private void getGridPosition3x3(int row, int col, float[] result) {
+        float spacing = mAvailableSpace * GRID_3X3_SPACING;
+        float iconSize = mIconSize * scaleForItem(MAX_NUM_ITEMS_IN_PREVIEW, 0);
+        float start = (mAvailableSpace - 2 * spacing - iconSize) / 2;
+        result[0] = start + (mIsRtl ? 2 - col : col) * spacing;
+        result[1] = start + row * spacing;
+    }
+
     private void getPosition(int index, int curNumItems, float[] result) {
+        if (curNumItems > MAX_NUM_ITEMS_IN_CIRCLE) {
+            // LC: More items than fit the circle are laid out in reading order on the 3x3 grid,
+            // vertically centered when they don't fill it.
+            int numRows = (curNumItems + 2) / 3;
+            getGridPosition3x3(index / 3, index % 3, result);
+            result[1] += (3 - numRows) * mAvailableSpace * GRID_3X3_SPACING / 2;
+            return;
+        }
         // The case of two items is homomorphic to the case of one.
         curNumItems = Math.max(curNumItems, 2);
 
@@ -185,7 +225,7 @@ public class ClippedFolderIconLayoutRule {
         } else {
             // Increase radius from 0 up to MAX_RADIUS_DILATION as the number of items increases.
             return mRadius * (1 + radiusDilation * (numItems - MIN_NUM_ITEMS_IN_PREVIEW)
-                    / (MAX_NUM_ITEMS_IN_PREVIEW - MIN_NUM_ITEMS_IN_PREVIEW));
+                    / (MAX_NUM_ITEMS_IN_CIRCLE - MIN_NUM_ITEMS_IN_PREVIEW));
         }
     }
 
@@ -197,7 +237,9 @@ public class ClippedFolderIconLayoutRule {
      */
     public float scaleForItem(int numItems, int page) {
         float scale;
-        if (page > 0) {
+        if (getPreviewGridSize() == 3 && (page > 0 || numItems > MAX_NUM_ITEMS_IN_CIRCLE)) {
+            scale = GRID_3X3_SCALE;
+        } else if (page > 0) {
             scale = MIN_SCALE;
         } else if (numItems <= 3) {
             scale = MAX_SCALE;
@@ -210,7 +252,7 @@ public class ClippedFolderIconLayoutRule {
     private float radiusDilationForItems(int numItems) {
         if (numItems == 3) {
             return 0.15f;
-        } else if (numItems == MAX_NUM_ITEMS_IN_PREVIEW) {
+        } else if (numItems == MAX_NUM_ITEMS_IN_CIRCLE) {
             return 0.12f;
         } else {
             return 0;

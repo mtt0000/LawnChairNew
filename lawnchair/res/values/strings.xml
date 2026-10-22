@@ -937,6 +937,9 @@
     <string name="folder_preview_bg_color_label">Icon background color</string>
 
     <string name="max_folder_columns">Maximum folder columns</string>
+    <string name="folder_preview_icon_count_label">Icons in closed folders</string>
+    <string name="folder_preview_icon_count_4">Up to 4 (2×2)</string>
+    <string name="folder_preview_icon_count_9">Up to 9 (3×3), smaller</string>
     <string name="max_folder_rows">Maximum folder rows</string>
 
     <!-- Quickstep settings -->

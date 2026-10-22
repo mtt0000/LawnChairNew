@@ -42,8 +42,6 @@ public class FolderGridOrganizer {
     private int mCountX;
     private int mCountY;
     private boolean mDisplayingUpperLeftQuadrant = false;
-    private static final int PREVIEW_MAX_ROWS = 2;
-    private static final int PREVIEW_MAX_COLUMNS = 2;
 
     /**
      * Note: must call {@link #setFolderInfo(FolderInfo)} manually for verifier to work.
@@ -202,7 +200,7 @@ public class FolderGridOrganizer {
     /**
      * @param page The page the item is on.
      * @param rank The rank of the item.
-     * @return True iff the icon is in the 2x2 upper left quadrant of the Folder.
+     * @return True iff the icon is in the 2x2 (or 3x3) upper left quadrant of the Folder.
      */
     public boolean isItemInPreview(int page, int rank) {
         // First page items are laid out such that the first 4 items are always in the upper
@@ -210,7 +208,8 @@ public class FolderGridOrganizer {
         if (page > 0 || mDisplayingUpperLeftQuadrant) {
             int col = rank % mCountX;
             int row = rank / mCountX;
-            return col < PREVIEW_MAX_COLUMNS && row < PREVIEW_MAX_ROWS;
+            int previewGridSize = ClippedFolderIconLayoutRule.getPreviewGridSize();
+            return col < previewGridSize && row < previewGridSize;
         }
         // If we have less than 4 items do this
         return rank < MAX_NUM_ITEMS_IN_PREVIEW;

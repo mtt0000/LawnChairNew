@@ -66,6 +66,7 @@ import com.android.launcher3.Workspace
 import com.android.launcher3.dagger.ApplicationContext
 import com.android.launcher3.dagger.LauncherAppComponent
 import com.android.launcher3.dagger.LauncherAppSingleton
+import com.android.launcher3.folder.ClippedFolderIconLayoutRule
 import com.android.launcher3.graphics.ThemeManager as L3ThemeManager
 import com.android.launcher3.util.ComponentKey
 import com.android.launcher3.util.DaggerSingletonObject
@@ -739,6 +740,11 @@ class PreferenceManager2 @Inject constructor(
         onSet = { reloadHelper.reloadGrid() },
     )
 
+    val folderPreviewIconCount = preference(
+        key = intPreferencesKey(name = "folder_preview_icon_count"),
+        defaultValue = 4,
+    )
+
     val additionalFonts = preference(
         key = stringPreferencesKey(name = "additional_fonts"),
         defaultValue = "",
@@ -905,6 +911,17 @@ class PreferenceManager2 @Inject constructor(
     init {
         preferencesDataStore.data
             .onEach { cachedPreferences = it }
+            .launchIn(scope)
+
+        ClippedFolderIconLayoutRule.setMaxNumItemsInPreview(folderPreviewIconCount.firstCached(this))
+        folderPreviewIconCount.get()
+            .drop(1)
+            .distinctUntilChanged()
+            .onEach { count ->
+                ClippedFolderIconLayoutRule.setMaxNumItemsInPreview(count)
+                // Folder icons only lay out their preview when they are bound
+                LauncherAppState.getInstance(context).model.reloadIfActive()
+            }
             .launchIn(scope)
 
         initializeIconShape(iconShape.firstCached(this))

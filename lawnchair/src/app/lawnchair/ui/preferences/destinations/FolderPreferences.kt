@@ -26,6 +26,8 @@ import app.lawnchair.preferences2.preferenceManager2
 import app.lawnchair.ui.preferences.LocalIsExpandedScreen
 import app.lawnchair.ui.preferences.components.NavigationActionPreference
 import app.lawnchair.ui.preferences.components.colorpreference.ColorPreference
+import app.lawnchair.ui.preferences.components.controls.ListPreference
+import app.lawnchair.ui.preferences.components.controls.ListPreferenceEntry
 import app.lawnchair.ui.preferences.components.controls.SliderPreference
 import app.lawnchair.ui.preferences.components.controls.SwitchPreference
 import app.lawnchair.ui.preferences.components.layout.ExpandAndShrink
@@ -93,6 +95,11 @@ fun FolderPreferences(
 
         val homeScreenLabelsAdapter = prefs2.showIconLabelsOnHomeScreenFolder.getAdapter()
         PreferenceGroup(heading = stringResource(id = R.string.icons)) {
+            ListPreference(
+                adapter = prefs2.folderPreviewIconCount.getAdapter(),
+                entries = folderPreviewIconCountEntries,
+                label = stringResource(id = R.string.folder_preview_icon_count_label),
+            )
             SwitchPreference(
                 adapter = homeScreenLabelsAdapter,
                 label = stringResource(id = R.string.show_labels),
@@ -109,3 +116,8 @@ fun FolderPreferences(
         }
     }
 }
+
+private val folderPreviewIconCountEntries = listOf(
+    ListPreferenceEntry(4) { stringResource(id = R.string.folder_preview_icon_count_4) },
+    ListPreferenceEntry(9) { stringResource(id = R.string.folder_preview_icon_count_9) },
+)
