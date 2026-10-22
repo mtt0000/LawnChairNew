@@ -32,6 +32,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Flags.allowPrivateProfile
 import android.os.IBinder
+import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
 import android.util.ArrayMap
@@ -91,20 +92,32 @@ open class SystemApiWrapper @Inject constructor(@ApplicationContext context: Con
         }
         return try {
             val users = ArrayMap<UserHandle, UserIconInfo>()
-            mContext.getSystemService(UserManager::class.java)!!.userProfiles?.forEach { user ->
-                mContext.getSystemService(LauncherApps::class.java)!!.getLauncherUserInfo(user)?.apply {
-                    users[user] =
-                        UserIconInfo(
+            val userManager = mContext.getSystemService(UserManager::class.java)!!
+            userManager.userProfiles?.forEach { user ->
+                val userInfo = mContext.getSystemService(LauncherApps::class.java)!!.getLauncherUserInfo(user)
+                if (userInfo == null) {
+                    // LC: Android withholds the info only for hidden profiles (the private space)
+                    // while we can't access them, e.g. before becoming the default launcher.
+                    if (user != Process.myUserHandle()) {
+                        users[user] = UserIconInfo(
                             user,
-                            when (userType) {
-                                UserManager.USER_TYPE_PROFILE_MANAGED -> UserIconInfo.TYPE_WORK
-                                UserManager.USER_TYPE_PROFILE_CLONE -> UserIconInfo.TYPE_CLONED
-                                UserManager.USER_TYPE_PROFILE_PRIVATE -> UserIconInfo.TYPE_PRIVATE
-                                else -> UserIconInfo.TYPE_MAIN
-                            },
-                            userSerialNumber.toLong()
+                            UserIconInfo.TYPE_PRIVATE,
+                            userManager.getSerialNumberForUser(user),
                         )
+                    }
+                    return@forEach
                 }
+                users[user] =
+                    UserIconInfo(
+                        user,
+                        when (userInfo.userType) {
+                            UserManager.USER_TYPE_PROFILE_MANAGED -> UserIconInfo.TYPE_WORK
+                            UserManager.USER_TYPE_PROFILE_CLONE -> UserIconInfo.TYPE_CLONED
+                            UserManager.USER_TYPE_PROFILE_PRIVATE -> UserIconInfo.TYPE_PRIVATE
+                            else -> UserIconInfo.TYPE_MAIN
+                        },
+                        userInfo.userSerialNumber.toLong()
+                    )
             }
             return users
         } catch (t : Throwable) {
