@@ -280,7 +280,7 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
         appSteam.forEachOrdered(mApps::add);
         privateAppStream.forEachOrdered(mPrivateApps::add);
         // LC: Show the locked private space as a fake app among the personal apps.
-        if (mPrivateProviderManager != null && !mPrivateApps.isEmpty()) {
+        if (mPrivateProviderManager != null) {
             AppInfo disguise = mPrivateProviderManager.getDisguiseAppInfo();
             if (disguise != null) {
                 int index = Collections.binarySearch(mApps, disguise, mAppNameComparator);
