@@ -120,6 +120,12 @@ public class ApiWrapper {
                 try {
                     if (Utilities.ATLEAST_V && launcherApps != null) {
                         LauncherUserInfo userInfo = launcherApps.getLauncherUserInfo(user);
+                        if (userInfo == null && !Process.myUserHandle().equals(user)) {
+                            // LC: Android withholds the info only for hidden profiles (the private
+                            // space) while we can't access them, e.g. before becoming the default
+                            // launcher. Don't let the badge check above turn it into a work profile.
+                            info = new UserIconInfo(user, UserIconInfo.TYPE_PRIVATE, serial);
+                        }
                         if (userInfo != null) {
                             var userType = userInfo.getUserType();
                             info = new UserIconInfo(
@@ -131,6 +137,11 @@ public class ApiWrapper {
                                     serial
                             );
                         }
+                    }
+                } catch (SecurityException e) {
+                    // LC: Same as a withheld LauncherUserInfo, see above.
+                    if (!Process.myUserHandle().equals(user)) {
+                        info = new UserIconInfo(user, UserIconInfo.TYPE_PRIVATE, serial);
                     }
                 } catch (Throwable t) {
                     // Ignore

@@ -79,12 +79,29 @@ class LawnchairBackup(
         }
         context.getDatabasePath(LAUNCHER_DB_FILE_NAME).parentFile?.deleteRecursively()
         readZip(handlers)
+        // The running process still holds the pre-restore launcher preferences in memory, and any
+        // write through them saves that whole stale copy over the restored file. Reload it first.
+        if (contents.hasFlag(INCLUDE_LAYOUT_AND_SETTINGS)) {
+            reloadPrefsFromDisk()
+        }
         // Written after the zip has been extracted: the backed up preferences file is one of
         // the restored entries, so writing the grid state first would let it be overwritten.
         DeviceGridState(info.gridState).writeToPrefs(context, true)
 
         val dbController = ModelDbController(context)
         RestoreDbTask.performRestore(context, dbController)
+    }
+
+    /**
+     * Makes the cached launcher [android.content.SharedPreferences] re-read their file, which
+     * [Context.MODE_MULTI_PROCESS] does when the file was changed behind their back.
+     */
+    @Suppress("DEPRECATION")
+    private fun reloadPrefsFromDisk() {
+        context.applicationContext.getSharedPreferences(
+            LauncherFiles.SHARED_PREFERENCES_KEY,
+            Context.MODE_MULTI_PROCESS,
+        )
     }
 
     private suspend fun readZip(handlers: Map<String, suspend (InputStream) -> Unit>) {

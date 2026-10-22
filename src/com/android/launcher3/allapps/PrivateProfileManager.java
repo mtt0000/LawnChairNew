@@ -235,7 +235,7 @@ public class PrivateProfileManager extends UserProfileManager {
      */
     @Nullable
     public AppInfo getDisguiseAppInfo() {
-        if (getCurrentState() != STATE_DISABLED) {
+        if (!isPrivateSpaceLocked()) {
             return null;
         }
         PrivateSpaceDisguise disguise = PrivateSpaceDisguise.current(mAllApps.getContext());
@@ -246,6 +246,15 @@ public class PrivateProfileManager extends UserProfileManager {
             mDisguiseInfo = disguise.createAppInfo(mAllApps.getContext());
         }
         return mDisguiseInfo;
+    }
+
+    /**
+     * LC: Whether a private space exists and is locked. Asks the system directly, as the apps of a
+     * locked private space are not listed when it is hidden while locked.
+     */
+    private boolean isPrivateSpaceLocked() {
+        UserHandle user = getProfileUser();
+        return user != null && mUserManager.isQuietModeEnabled(user);
     }
 
     /** LC: Unlocks the private space when its disguise icon is tapped. */
