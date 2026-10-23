@@ -11,8 +11,10 @@ on:
   delete:
   workflow_dispatch:
 
+# Pushes and manual runs of the same branch share a group, so they never replace its release at the
+# same time. Branch deletions run with the default branch as ref, so they get their own group.
 concurrency:
-  group: branch-release-${{ github.event_name }}-${{ github.ref }}
+  group: branch-release-${{ github.event_name == 'delete' && 'delete' || github.ref }}
   cancel-in-progress: true
 
 permissions:
