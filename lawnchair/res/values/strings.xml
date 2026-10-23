@@ -685,7 +685,7 @@
     <string name="gesture_handler_open_app_search">Open app search</string>
     <string name="gesture_handler_open_search">Open search</string>
     <string name="search_action_opens_app_search_label">Search action opens app search</string>
-    <string name="search_action_opens_app_search_description">When the search action (search key or gesture apps) is used on the home screen, open the app drawer search with the keyboard</string>
+    <string name="search_action_opens_app_search_description">Gestures set to \"Open search\" and the search action (search key or gesture apps) open the app drawer search with the keyboard</string>
     <string name="gesture_handler_open_assistant">Open assistant</string>
 
     <string name="pick_app_for_gesture">Pick app</string>
