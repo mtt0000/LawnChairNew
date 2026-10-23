@@ -38,6 +38,7 @@ import app.lawnchair.data.wallpaper.service.WallpaperService
 import app.lawnchair.gestures.GestureController
 import app.lawnchair.gestures.VerticalSwipeTouchController
 import app.lawnchair.gestures.config.GestureHandlerConfig
+import app.lawnchair.gestures.handlers.OpenAppSearchGestureHandler
 import app.lawnchair.gestures.ui.LawnchairShortcutActivity
 import app.lawnchair.nexuslauncher.OverlayCallbackImpl
 import app.lawnchair.preferences.PreferenceManager
@@ -504,6 +505,19 @@ class LawnchairLauncher : QuickstepLauncher() {
     }
 
     override fun getDefaultOverlay(): LauncherOverlayManager = defaultOverlay
+
+    /**
+     * Called for the system "search" action (e.g. the search key, also sent by gesture apps) while
+     * the launcher is in the foreground.
+     */
+    override fun onSearchRequested(): Boolean {
+        if (!preferenceManager2.searchActionOpensAppSearch.firstCached()) {
+            return super.onSearchRequested()
+        }
+        val launcher = this
+        lifecycleScope.launch { OpenAppSearchGestureHandler(launcher).onTrigger(launcher) }
+        return true
+    }
 
     fun recreateIfNotScheduled() {
         if (sRestartFlags == 0) {

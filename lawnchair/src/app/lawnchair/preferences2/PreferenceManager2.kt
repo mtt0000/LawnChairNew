@@ -850,6 +850,11 @@ class PreferenceManager2 @Inject constructor(
         defaultValue = GestureHandlerConfig.Sleep,
     )
 
+    val searchActionOpensAppSearch = preference(
+        key = booleanPreferencesKey(name = "search_action_opens_app_search"),
+        defaultValue = false,
+    )
+
     val sleepMode = preference(
         key = stringPreferencesKey(name = "sleep_mode"),
         defaultValue = SleepMode.AUTO,
