@@ -77,11 +77,17 @@ jobs:
             gh release delete "$TAG" -y --cleanup-tag
           fi
           git log -1 --format='Branch: `${{ github.ref_name }}`%nCommit: %H%n%n%B' > notes.md
+          # Only the default branch's release is marked as the latest one
+          if [ "${{ github.ref_name }}" = "${{ github.event.repository.default_branch }}" ]; then
+            LATEST=true
+          else
+            LATEST=false
+          fi
           gh release create "$TAG" "./$APK_NAME" \
             --target "${{ github.sha }}" \
             --title "${{ github.ref_name }} (${SHORT_SHA})" \
             --notes-file notes.md \
-            --prerelease
+            --latest="$LATEST"
 
   cleanup-deleted-branches:
     needs: build-and-release
